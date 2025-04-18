@@ -10,10 +10,10 @@ import com.medixpress.user_service.dto.LoginResponse;
 import com.medixpress.user_service.dto.UserDTO;
 import com.medixpress.user_service.entity.User;
 import com.medixpress.user_service.repository.UserRepository;
-import com.medixpress.user_service.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.Objects;
@@ -24,8 +24,14 @@ import java.util.Optional;
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final GeoLocationService geoLocationService;
+
     @Autowired
-    private final JwtUtil jwtUtil;
+    private RestTemplate restTemplate;
+
+    public String generateTokenFromApiGateway(Long id) {
+        String url = "http://localhost:8080/auth/generate-token?id=" + id;
+        return restTemplate.postForObject(url, null, String.class);
+    }
 
     @Override
     public User registerUser(UserDTO userDTO) {
@@ -80,7 +86,7 @@ public class UserServiceImpl implements UserService {
             throw new InvalidCredentialsException("Invalid email or password");
         }
 
-        String token = jwtUtil.generateToken(user.getId());
+        String token = generateTokenFromApiGateway(user.getId());
 
         if (user.getUserType().toString().equals("CUSTOMER")) {
             return new LoginResponse(

@@ -1,4 +1,4 @@
-package com.medixpress.user_service.util;
+package com.medixpress.apigateway.util;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

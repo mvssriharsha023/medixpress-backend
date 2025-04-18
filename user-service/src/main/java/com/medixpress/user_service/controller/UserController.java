@@ -5,9 +5,7 @@ import com.medixpress.user_service.dto.LoginResponse;
 import com.medixpress.user_service.dto.UserDTO;
 import com.medixpress.user_service.exception.UserNotExistException;
 import com.medixpress.user_service.entity.User;
-import com.medixpress.user_service.util.JwtUtil;
 import com.medixpress.user_service.service.UserService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -19,9 +17,6 @@ import java.util.List;
 @RequestMapping("/user")
 @RequiredArgsConstructor
 public class UserController {
-
-    @Autowired
-    private JwtUtil jwtUtil;
 
     @Autowired
     private final UserService userService;
@@ -37,9 +32,8 @@ public class UserController {
     }
 
     @PutMapping
-    public ResponseEntity<User> updateUser(@RequestHeader String token, @RequestBody UserDTO userDTO) {
-        Long id = Long.valueOf(jwtUtil.extractId(token));
-        User updated = userService.updateUser(id, userDTO);
+    public ResponseEntity<User> updateUser(@RequestHeader("id") Long userId, @RequestBody UserDTO userDTO) {
+        User updated = userService.updateUser(userId, userDTO);
         return ResponseEntity.ok(updated);
     }
     @GetMapping
@@ -55,17 +49,14 @@ public class UserController {
     }
 
     @GetMapping("/get")
-    public ResponseEntity<User> getUserByIdForUser(@RequestHeader String token) {
-        Long userId = Long.valueOf(jwtUtil.extractId(token));
+    public ResponseEntity<User> getUserByIdForUser(@RequestHeader("id") Long userId) {
         User user = userService.getUserById(userId);
         return ResponseEntity.ok(user);
     }
 
     // Delete
     @DeleteMapping
-    public ResponseEntity<String> deleteUser(HttpServletRequest request) {
-//        Long userId = Long.valueOf(jwtUtil.extractId(token));
-        Long userId = (Long) request.getAttribute("id");
+    public ResponseEntity<String> deleteUser(@RequestHeader("id") Long userId) {
         System.out.println(userId);
         try {
             userService.deleteUser(userId);
