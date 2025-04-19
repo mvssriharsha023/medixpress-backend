@@ -1,6 +1,5 @@
-package com.medixpress.user_service.dto;
+package com.medixpress.medicine_service.dto;
 
-import com.medixpress.user_service.entity.UserType;
 import lombok.*;
 
 @Getter

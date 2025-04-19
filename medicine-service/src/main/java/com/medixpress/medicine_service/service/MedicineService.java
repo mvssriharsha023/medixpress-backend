@@ -1,6 +1,7 @@
 package com.medixpress.medicine_service.service;
 
 import com.medixpress.medicine_service.dto.MedicineDTO;
+import com.medixpress.medicine_service.dto.MedicineSearchDTO;
 import com.medixpress.medicine_service.model.Medicine;
 
 import java.util.List;
@@ -21,4 +22,6 @@ public interface MedicineService {
     Medicine getMedicineById(String id);
 
     int getAvailableQuantity(String medicineId);
+
+    List<MedicineSearchDTO> searchMedicine(Long userId, String medicineName);
 }

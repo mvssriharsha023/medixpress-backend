@@ -1,4 +1,4 @@
-package com.medixpress.medicine_service;
+package com.medixpress.cart_service;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -9,10 +9,10 @@ import org.springframework.web.client.RestTemplate;
 
 @SpringBootApplication
 @EnableDiscoveryClient
-public class MedicineServiceApplication {
+public class CartServiceApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(MedicineServiceApplication.class, args);
+		SpringApplication.run(CartServiceApplication.class, args);
 	}
 
 	@Bean

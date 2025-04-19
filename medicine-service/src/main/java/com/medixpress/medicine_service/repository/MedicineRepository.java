@@ -10,4 +10,9 @@ public interface MedicineRepository extends MongoRepository<Medicine, String> {
     Medicine findByNameAndPharmacyId(String name, Long pharmacyId);
 
     List<Medicine> findByPharmacyId(Long pharmacyId);
+
+    List<Medicine> findByName(String medicineName);
+
+    List<Medicine> findByNameAndQuantityGreaterThan(String medicineName, int quantity);
+
 }

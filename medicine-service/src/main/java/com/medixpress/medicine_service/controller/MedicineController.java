@@ -1,8 +1,10 @@
 package com.medixpress.medicine_service.controller;
 
 import com.medixpress.medicine_service.dto.MedicineDTO;
+import com.medixpress.medicine_service.dto.MedicineSearchDTO;
 import com.medixpress.medicine_service.model.Medicine;
 import com.medixpress.medicine_service.service.MedicineService;
+import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -40,8 +42,23 @@ public class MedicineController {
         return ResponseEntity.ok(medicineService.getAllMedicines());
     }
 
-    @GetMapping("/{pharmacyId}")
+    @GetMapping("/pharmacy/{pharmacyId}")
     public ResponseEntity<List<Medicine>> getMedicine(@PathVariable Long pharmacyId) {
         return ResponseEntity.ok(medicineService.getAllMedicineByPharmacy(pharmacyId));
+    }
+
+    @GetMapping("/quantity/{id}")
+    public ResponseEntity<Integer> getAvailableQuantity(@PathVariable String id) {
+        return ResponseEntity.ok(medicineService.getAvailableQuantity(id));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Medicine> getMedicineById(@PathVariable String id) {
+        return ResponseEntity.ok(medicineService.getMedicineById(id));
+    }
+
+    @GetMapping("/search/{medicineName}")
+    public ResponseEntity<List<MedicineSearchDTO>> searchMedicine(@PathVariable String medicineName, @RequestHeader("id") Long userId) {
+        return ResponseEntity.ok(medicineService.searchMedicine(userId, medicineName));
     }
 }

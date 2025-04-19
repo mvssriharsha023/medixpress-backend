@@ -1,21 +1,58 @@
 package com.medixpress.medicine_service.service;
 
 import com.medixpress.medicine_service.dto.MedicineDTO;
+import com.medixpress.medicine_service.dto.MedicineSearchDTO;
+import com.medixpress.medicine_service.dto.UserDTO;
 import com.medixpress.medicine_service.exception.MedicineNotFoundException;
 import com.medixpress.medicine_service.exception.OutOfStockException;
 import com.medixpress.medicine_service.model.Medicine;
 import com.medixpress.medicine_service.repository.MedicineRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class MedicineServiceImpl implements MedicineService {
 
     @Autowired
     private MedicineRepository medicineRepository;
+
+    private UserDTO fetchUserById(Long userId) {
+        RestTemplate restTemplate = new RestTemplate();
+        String url = "http://localhost:8080/user-service/user/" + userId;
+        System.out.println(url);
+
+        try {
+            ResponseEntity<UserDTO> response = restTemplate.getForEntity(url, UserDTO.class);
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                return response.getBody();
+            }
+        } catch (Exception e) {
+            System.err.println("Error fetching user with ID " + userId + ": " + e.getMessage());
+        }
+
+        return null;
+    }
+
+    private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+        final int EARTH_RADIUS_KM = 6371;
+
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        return EARTH_RADIUS_KM * c;
+    }
 
     @Override
     public Medicine addOrUpdateMedicine(MedicineDTO medicineDTO) {
@@ -48,9 +85,6 @@ public class MedicineServiceImpl implements MedicineService {
         if (newQuantity < 0) {
             throw new OutOfStockException("Not enough quantity to reduce");
         }
-        if (newQuantity == 0) {
-            return Optional.empty();
-        }
         medicine.setQuantity(newQuantity);
         medicineRepository.save(medicine);
         return medicineRepository.findById(medicineId);
@@ -79,5 +113,48 @@ public class MedicineServiceImpl implements MedicineService {
 
         return medicine.getQuantity();
     }
+
+    @Override
+    public List<MedicineSearchDTO> searchMedicine(Long userId, String medicineName) {
+        List<Medicine> medicineList = medicineRepository.findByNameAndQuantityGreaterThan(medicineName, 0);
+        if (medicineList.isEmpty()) return Collections.emptyList();
+
+        // Step 1: Get requesting user's location
+        UserDTO user = fetchUserById(userId);
+
+        double userLat = user.getLatitude();
+        double userLng = user.getLongitude();
+
+        List<MedicineSearchDTO> dtoList = new ArrayList<>();
+
+        for (Medicine medicine : medicineList) {
+            // Step 2: Get pharmacy details (user)
+            UserDTO pharmacy = fetchUserById(medicine.getPharmacyId());
+            if (pharmacy == null) continue;
+
+            // Step 3: Calculate distance
+            double distance = calculateDistance(userLat, userLng, pharmacy.getLatitude(), pharmacy.getLongitude());
+
+            // Step 4: Build DTO
+            MedicineSearchDTO dto = new MedicineSearchDTO();
+            dto.setId(medicine.getId());
+            dto.setUserId(userId);
+            dto.setQuantity(medicine.getQuantity());
+            dto.setName(medicine.getName());
+            dto.setPharmacyId(pharmacy.getId()); // assuming getName() is in UserDTO
+            dto.setPrice(medicine.getPrice());
+            dto.setDistance(distance);
+            dtoList.add(dto);
+        }
+
+        // Step 5: Sort by distance, then price
+        dtoList.sort(Comparator
+                .comparingDouble(MedicineSearchDTO::getDistance)
+                .thenComparingDouble(MedicineSearchDTO::getPrice));
+
+        return dtoList;
+    }
+
+
 
 }
