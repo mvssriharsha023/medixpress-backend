@@ -40,11 +40,12 @@ public class CartController {
         return ResponseEntity.ok("Removed " + cartItemId + " from cart successfully.");
     }
 
-    @DeleteMapping("/clear")
-    public ResponseEntity<String> clearCart(@RequestHeader("id") Long userId) {
+    @DeleteMapping("/clear/{userId}")
+    public ResponseEntity<String> clearCart(@PathVariable Long userId) {
         if (userId == null) {
             throw new AuthenticationException("Please login to add medicines into cart");
         }
+        System.out.println("CLEAR CART for userId = " + userId);
         cartService.clearCart(userId);
         return ResponseEntity.ok("Clear cart successfully.");
     }

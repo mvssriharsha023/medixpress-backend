@@ -116,11 +116,17 @@ public class UserServiceImpl implements UserService {
     @Override
     public User updateUser(Long id, UserDTO dto) {
 
+        User user = userRepository.findById(id).orElseThrow(() -> new UserNotExistException("User not found"));
+
         Optional<User> opUserByEmail = userRepository.findByEmail(dto.getEmail());
         Optional<User> opUserByContactNumber = userRepository.findByContactNumber(dto.getContactNumber());
 
-        if (opUserByEmail.isPresent() || opUserByContactNumber.isPresent()) {
-            throw new UserAlreadyExistsException("Customer or Pharmacy with this email id or phone number already exists");
+        if (opUserByEmail.isPresent() && !Objects.equals(user.getEmail(), dto.getEmail())) {
+            throw new UserAlreadyExistsException("Customer or Pharmacy with this email id already exists");
+        }
+
+        if (opUserByContactNumber.isPresent() && !Objects.equals(user.getContactNumber(), dto.getContactNumber())) {
+            throw new UserAlreadyExistsException("Customer or Pharmacy with this phone number already exists");
         }
 
         // Split by comma

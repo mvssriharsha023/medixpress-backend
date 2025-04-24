@@ -1,6 +1,5 @@
 package com.medixpress.order_service.service;
 
-import com.medixpress.order_service.OrderServiceApplication;
 import com.medixpress.order_service.dto.OrderItemDTO;
 import com.medixpress.order_service.exception.*;
 import com.medixpress.order_service.model.Order;
@@ -11,10 +10,10 @@ import com.medixpress.order_service.repository.OrderItemRepository;
 import com.medixpress.order_service.repository.OrderRepository;
 import com.medixpress.order_service.response.CartItemDTO;
 import com.medixpress.order_service.response.MedicineResponse;
+import com.medixpress.order_service.response.UserDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.SpringApplication;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -74,16 +73,17 @@ public class OrderServiceImpl implements OrderService {
                 .orElse(Collections.emptyList());
     }
 
-    public void clearUserCart(Long userId) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("id", String.valueOf(userId));
+    public UserDTO getUserById(Long id) {
+        String url = "http://user-service/user/{id}";
+        return restTemplate.getForObject(url, UserDTO.class, id);
+    }
 
-        HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
+    public void clearUserCart(Long userId) {
 
         ResponseEntity<String> response = restTemplate.exchange(
-                "http://cart-service/api/cart/clear", // Use Eureka service name if using discovery
+                "http://cart-service/api/cart/clear/" + userId, // Use Eureka service name if using discovery
                 HttpMethod.DELETE,
-                requestEntity,
+                null,
                 String.class
         );
 
@@ -279,6 +279,7 @@ public class OrderServiceImpl implements OrderService {
 
         if (status.toString().equals("CANCELLED")) {
             if (order.getStatus().toString().equals("PLACED")) {
+
                 order.setStatus(OrderStatus.CANCELLED);
             } else {
                 throw new OutForDeliveryException("This order is already out for delivery or delivered");
@@ -286,6 +287,7 @@ public class OrderServiceImpl implements OrderService {
 
         } else if (status.toString().equals("DELIVERED")) {
             order.setStatus(OrderStatus.DELIVERED);
+
         } else {
             throw new UnauthorizedAccessException("Unauthorized access on this order");
         }
