@@ -10,7 +10,6 @@ import com.medixpress.order_service.repository.OrderItemRepository;
 import com.medixpress.order_service.repository.OrderRepository;
 import com.medixpress.order_service.response.CartItemDTO;
 import com.medixpress.order_service.response.MedicineResponse;
-import com.medixpress.order_service.response.UserDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,11 +70,6 @@ public class OrderServiceImpl implements OrderService {
 
         return Optional.ofNullable(response.getBody())
                 .orElse(Collections.emptyList());
-    }
-
-    public UserDTO getUserById(Long id) {
-        String url = "http://user-service/user/{id}";
-        return restTemplate.getForObject(url, UserDTO.class, id);
     }
 
     public void clearUserCart(Long userId) {
