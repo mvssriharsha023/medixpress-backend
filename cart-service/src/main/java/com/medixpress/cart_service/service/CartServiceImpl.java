@@ -116,7 +116,6 @@ public class CartServiceImpl implements CartService {
         if (newQuantity > availableStock) {
             throw new OutOfStockException("Requested quantity exceeds available stock.");
         }
-
         item.setQuantity(newQuantity);
         LocalDateTime now = LocalDateTime.now();
         item.setAddedAt(now);

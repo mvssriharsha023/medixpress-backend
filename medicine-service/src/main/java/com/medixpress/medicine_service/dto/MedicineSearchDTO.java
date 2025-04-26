@@ -15,6 +15,7 @@ public class MedicineSearchDTO {
     private Double price;
     private Integer quantity;
     private Long pharmacyId;
+    private String pharmacyName;
     private Double distance;
 
 }

@@ -20,10 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -293,6 +290,10 @@ public class OrderServiceImpl implements OrderService {
     public Order updateStatusByPharmacy(Long pharmacyId, String orderId, OrderStatus status) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException("Order not present"));
+
+        if (!Objects.equals(pharmacyId, order.getPharmacyId())) {
+            throw new UnauthorizedAccessException("Unauthorized access on this order");
+        }
 
         if (status.toString().equals("OUT_OF_DELIVERY") && order.getStatus().toString().equals("PLACED")) {
             order.setStatus(OrderStatus.OUT_OF_DELIVERY);

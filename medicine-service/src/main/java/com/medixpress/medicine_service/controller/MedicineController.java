@@ -57,8 +57,12 @@ public class MedicineController {
         return ResponseEntity.ok(medicineService.getMedicineById(id));
     }
 
-    @GetMapping("/search/{medicineName}")
-    public ResponseEntity<List<MedicineSearchDTO>> searchMedicine(@PathVariable String medicineName, @RequestHeader("id") Long userId) {
+    @GetMapping("/search")
+    public ResponseEntity<List<MedicineSearchDTO>> searchMedicine(
+            @RequestParam(value = "name", defaultValue = "") String medicineName,
+            @RequestHeader("id") Long userId) {
+
         return ResponseEntity.ok(medicineService.searchMedicine(userId, medicineName));
     }
+
 }

@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class MedicineServiceImpl implements MedicineService {
@@ -116,44 +117,54 @@ public class MedicineServiceImpl implements MedicineService {
 
     @Override
     public List<MedicineSearchDTO> searchMedicine(Long userId, String medicineName) {
-        List<Medicine> medicineList = medicineRepository.findByNameAndQuantityGreaterThan(medicineName, 0);
+        List<Medicine> medicineList;
+
+        if (medicineName == null || medicineName.trim().isEmpty()) {
+            // Filter all medicines with quantity > 0
+            medicineList = medicineRepository.findAll()
+                    .stream()
+                    .filter(med -> med.getQuantity() > 0)
+                    .collect(Collectors.toList());
+        } else {
+            medicineList = medicineRepository.findByNameAndQuantityGreaterThan(medicineName, 0);
+        }
+
         if (medicineList.isEmpty()) return Collections.emptyList();
 
         // Step 1: Get requesting user's location
         UserDTO user = fetchUserById(userId);
-
         double userLat = user.getLatitude();
         double userLng = user.getLongitude();
 
         List<MedicineSearchDTO> dtoList = new ArrayList<>();
 
         for (Medicine medicine : medicineList) {
-            // Step 2: Get pharmacy details (user)
             UserDTO pharmacy = fetchUserById(medicine.getPharmacyId());
             if (pharmacy == null) continue;
 
-            // Step 3: Calculate distance
             double distance = calculateDistance(userLat, userLng, pharmacy.getLatitude(), pharmacy.getLongitude());
 
-            // Step 4: Build DTO
-            MedicineSearchDTO dto = new MedicineSearchDTO();
-            dto.setId(medicine.getId());
-            dto.setUserId(userId);
-            dto.setQuantity(medicine.getQuantity());
-            dto.setName(medicine.getName());
-            dto.setPharmacyId(pharmacy.getId()); // assuming getName() is in UserDTO
-            dto.setPrice(medicine.getPrice());
-            dto.setDistance(distance);
+            MedicineSearchDTO dto = MedicineSearchDTO.builder()
+                    .id(medicine.getId())
+                    .userId(userId)
+                    .name(medicine.getName())
+                    .price(medicine.getPrice())
+                    .quantity(medicine.getQuantity())
+                    .pharmacyId(pharmacy.getId())
+                    .pharmacyName(pharmacy.getName())
+                    .distance(distance)
+                    .build();
+
             dtoList.add(dto);
         }
 
-        // Step 5: Sort by distance, then price
         dtoList.sort(Comparator
                 .comparingDouble(MedicineSearchDTO::getDistance)
                 .thenComparingDouble(MedicineSearchDTO::getPrice));
 
         return dtoList;
     }
+
 
 
 
