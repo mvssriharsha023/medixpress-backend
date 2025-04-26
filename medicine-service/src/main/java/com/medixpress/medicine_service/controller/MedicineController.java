@@ -4,11 +4,13 @@ import com.medixpress.medicine_service.dto.MedicineDTO;
 import com.medixpress.medicine_service.dto.MedicineSearchDTO;
 import com.medixpress.medicine_service.model.Medicine;
 import com.medixpress.medicine_service.service.MedicineService;
+import jakarta.ws.rs.Path;
 import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.swing.text.html.Option;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,6 +36,18 @@ public class MedicineController {
     @PutMapping("/reduce/{id}")
     public ResponseEntity<Optional<Medicine>> reduceMedicine(@PathVariable String id, @RequestBody Integer quantity) {
         Optional<Medicine> medicine = medicineService.reduceMedicineQuantity(id, quantity);
+        return ResponseEntity.ok(medicine);
+    }
+
+    @PutMapping("/addQuantity/{id}")
+    public ResponseEntity<Optional<Medicine>> increaseMedicine(@PathVariable String id, @RequestBody Integer quantity) {
+        Optional<Medicine> medicine = medicineService.addMedicineQuantity(id, quantity);
+        return ResponseEntity.ok(medicine);
+    }
+
+    @PutMapping("/changePrice/{id}")
+    public ResponseEntity<Optional<Medicine>> changePriceOfMedicine(@PathVariable String id, @RequestBody Double price) {
+        Optional<Medicine> medicine = medicineService.changePrice(id, price);
         return ResponseEntity.ok(medicine);
     }
 

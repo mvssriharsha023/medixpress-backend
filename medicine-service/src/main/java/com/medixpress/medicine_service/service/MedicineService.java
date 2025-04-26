@@ -15,6 +15,10 @@ public interface MedicineService {
 
     Optional<Medicine> reduceMedicineQuantity(String medicineId, Integer quantity);
 
+    Optional<Medicine> addMedicineQuantity(String medicineId, Integer quantity);
+
+    Optional<Medicine> changePrice(String medicineId, Double price);
+
     List<Medicine> getAllMedicines();
 
     List<Medicine> getAllMedicineByPharmacy(Long pharmacyId);

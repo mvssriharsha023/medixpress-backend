@@ -4,6 +4,7 @@ import com.medixpress.medicine_service.dto.MedicineDTO;
 import com.medixpress.medicine_service.dto.MedicineSearchDTO;
 import com.medixpress.medicine_service.dto.UserDTO;
 import com.medixpress.medicine_service.exception.MedicineNotFoundException;
+import com.medixpress.medicine_service.exception.NegativeIntegerException;
 import com.medixpress.medicine_service.exception.OutOfStockException;
 import com.medixpress.medicine_service.model.Medicine;
 import com.medixpress.medicine_service.repository.MedicineRepository;
@@ -87,6 +88,29 @@ public class MedicineServiceImpl implements MedicineService {
             throw new OutOfStockException("Not enough quantity to reduce");
         }
         medicine.setQuantity(newQuantity);
+        medicineRepository.save(medicine);
+        return medicineRepository.findById(medicineId);
+    }
+
+    @Override
+    public Optional<Medicine> addMedicineQuantity(String medicineId, Integer quantity) {
+        Medicine medicine = medicineRepository.findById(medicineId).orElseThrow(() -> new MedicineNotFoundException("Medicine not found"));
+        int newQuantity = medicine.getQuantity() + quantity;
+        if (newQuantity < 0) {
+            throw new OutOfStockException("Not enough quantity to reduce");
+        }
+        medicine.setQuantity(newQuantity);
+        medicineRepository.save(medicine);
+        return medicineRepository.findById(medicineId);
+    }
+
+    @Override
+    public Optional<Medicine> changePrice(String medicineId, Double price) {
+        Medicine medicine = medicineRepository.findById(medicineId).orElseThrow(() -> new MedicineNotFoundException("Medicine not found"));
+        if (price <= 0) {
+            throw new NegativeIntegerException("Cannot set price to zero or negative");
+        }
+        medicine.setPrice(price);
         medicineRepository.save(medicine);
         return medicineRepository.findById(medicineId);
     }

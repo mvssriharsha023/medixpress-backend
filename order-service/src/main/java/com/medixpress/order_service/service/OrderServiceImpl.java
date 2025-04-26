@@ -109,6 +109,32 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
+    public MedicineResponse increaseMedicineStock(String medicineId, int quantityToIncrease) {
+        String url = "http://medicine-service/api/medicines/addQuantity/" + medicineId;
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<Integer> requestEntity = new HttpEntity<>(quantityToIncrease, headers);
+
+        try {
+            ResponseEntity<MedicineResponse> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.PUT,
+                    requestEntity,
+                    MedicineResponse.class
+            );
+
+            if (response.getStatusCode().is2xxSuccessful()) {
+                return response.getBody();
+            } else {
+                throw new RuntimeException("Failed to increase medicine stock: " + response.getStatusCode());
+            }
+        } catch (Exception ex) {
+            throw new RuntimeException("Error while increasing medicine stock: " + ex.getMessage(), ex);
+        }
+    }
+
 
 
 
@@ -270,8 +296,13 @@ public class OrderServiceImpl implements OrderService {
 
         if (status.toString().equals("CANCELLED")) {
             if (order.getStatus().toString().equals("PLACED")) {
-
                 order.setStatus(OrderStatus.CANCELLED);
+
+                // For each item in the order, add back to inventory
+                for (OrderItem item : order.getItems()) {
+                    increaseMedicineStock(item.getMedicineId(), item.getQuantity());
+                }
+
             } else {
                 throw new OutForDeliveryException("This order is already out for delivery or delivered");
             }
@@ -282,6 +313,7 @@ public class OrderServiceImpl implements OrderService {
         } else {
             throw new UnauthorizedAccessException("Unauthorized access on this order");
         }
+
         orderRepository.save(order);
         return order;
     }
