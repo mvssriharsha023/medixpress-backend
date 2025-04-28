@@ -1,28 +1,39 @@
 package com.medixpress.apigateway.controller;
 
+import com.medixpress.apigateway.util.JwtUtil;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.http.ResponseEntity;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.when;
 
-import org.springframework.test.web.servlet.MockMvc;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import org.springframework.http.MediaType;
-@SpringBootTest
-@AutoConfigureMockMvc
 class AuthControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+    @Mock
+    private JwtUtil jwtUtil;
+
+    @InjectMocks
+    private AuthController authController;
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+    }
 
     @Test
-    void testLoginEndpoint() throws Exception {
-        mockMvc.perform(post("/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"username\": \"testuser\", \"password\": \"password\"}"))
-                .andExpect(status().isOk());
+    void testGenerateToken() {
+        Long id = 1L;
+        String mockToken = "mock-jwt-token";
+
+        when(jwtUtil.generateToken(id)).thenReturn(mockToken);
+
+        ResponseEntity<String> response = authController.generateToken(id);
+
+        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(mockToken, response.getBody());
     }
 }
-
