@@ -16,4 +16,8 @@ public interface UserService {
     void deleteUser(Long id);
     List<User> getAllCustomers();
     List<User> getAllPharmacy();
+
+    // adding for testing
+    User findUserById(Long id);
+    User saveUser(User user);
 }
