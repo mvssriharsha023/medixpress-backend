@@ -15,16 +15,11 @@ public class CorsGlobalConfiguration {
     public CorsWebFilter corsWebFilter() {
 
         CorsConfiguration corsConfig = new CorsConfiguration();
-        corsConfig.setAllowedOrigins(List.of("http://localhost:3000")); // ✅ Use only this
+        corsConfig.setAllowedOrigins(List.of("http://localhost:3000","http://localhost:8080")); // ✅ Use only this
         corsConfig.addAllowedMethod("*");
         corsConfig.addAllowedHeader("*");
         corsConfig.setAllowCredentials(true);
-//        CorsConfiguration corsConfig = new CorsConfiguration();
-//        corsConfig.addAllowedOrigin("http://localhost:3000");
-//        corsConfig.addAllowedMethod("*");
-//        corsConfig.addAllowedHeader("*");
-//        corsConfig.setAllowedOriginPatterns(List.of("http://localhost:3000"));
-//        corsConfig.setAllowCredentials(true);
+
 
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
