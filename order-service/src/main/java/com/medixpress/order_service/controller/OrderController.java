@@ -3,8 +3,11 @@ package com.medixpress.order_service.controller;
 import com.medixpress.order_service.dto.OrderResponseDTO;
 import com.medixpress.order_service.model.Order;
 import com.medixpress.order_service.model.OrderStatus;
+import com.medixpress.order_service.service.EmailService;
 import com.medixpress.order_service.service.OrderService;
+import jakarta.mail.MessagingException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,9 +20,12 @@ public class OrderController {
     @Autowired
     private OrderService orderService;
 
+
+
+
     // Place a new order (from user's cart)
     @PostMapping("/place")
-    public ResponseEntity<Order> placeOrder(@RequestHeader("id") Long id) {
+    public ResponseEntity<Order> placeOrder(@RequestHeader("id") Long id) throws MessagingException {
         return ResponseEntity.ok(orderService.placeOrder(id));
     }
 
@@ -43,17 +49,17 @@ public class OrderController {
 
     // Update status to CANCELLED
     @PostMapping("/cancel/{orderId}")
-    public ResponseEntity<Order> cancelOrder(@PathVariable String orderId, @RequestHeader("id") Long userId) {
+    public ResponseEntity<Order> cancelOrder(@PathVariable String orderId, @RequestHeader("id") Long userId) throws MessagingException {
         return ResponseEntity.ok(orderService.updateStatusByUser(userId, orderId, OrderStatus.CANCELLED));
     }
 
     @PostMapping("/delivered/{orderId}")
-    public ResponseEntity<Order> deliveredOrder(@PathVariable String orderId, @RequestHeader("id") Long userId) {
+    public ResponseEntity<Order> deliveredOrder(@PathVariable String orderId, @RequestHeader("id") Long userId) throws MessagingException {
         return ResponseEntity.ok(orderService.updateStatusByUser(userId, orderId, OrderStatus.DELIVERED));
     }
 
     @PostMapping("/outofdelivery/{orderId}")
-    public ResponseEntity<Order> outOfDeliveryOrder(@PathVariable String orderId, @RequestHeader("id") Long pharmacyId) {
+    public ResponseEntity<Order> outOfDeliveryOrder(@PathVariable String orderId, @RequestHeader("id") Long pharmacyId) throws MessagingException {
         return ResponseEntity.ok(orderService.updateStatusByPharmacy(pharmacyId, orderId, OrderStatus.OUT_OF_DELIVERY));
     }
 }
