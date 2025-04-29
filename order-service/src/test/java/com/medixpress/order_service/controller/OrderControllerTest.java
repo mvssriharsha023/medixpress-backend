@@ -4,6 +4,7 @@ import com.medixpress.order_service.dto.OrderResponseDTO;
 import com.medixpress.order_service.model.Order;
 import com.medixpress.order_service.model.OrderStatus;
 import com.medixpress.order_service.service.OrderService;
+import jakarta.mail.MessagingException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -31,7 +32,7 @@ class OrderControllerTest {
     }
 
     @Test
-    void testPlaceOrder() {
+    void testPlaceOrder() throws MessagingException {
         Order mockOrder = new Order();
         when(orderService.placeOrder(1L)).thenReturn(mockOrder);
 
@@ -75,7 +76,7 @@ class OrderControllerTest {
     }
 
     @Test
-    void testCancelOrder() {
+    void testCancelOrder() throws MessagingException {
         Order mockOrder = new Order();
         when(orderService.updateStatusByUser(1L, "order123", OrderStatus.CANCELLED)).thenReturn(mockOrder);
 
@@ -86,7 +87,7 @@ class OrderControllerTest {
     }
 
     @Test
-    void testDeliveredOrder() {
+    void testDeliveredOrder() throws MessagingException {
         Order mockOrder = new Order();
         when(orderService.updateStatusByUser(1L, "order123", OrderStatus.DELIVERED)).thenReturn(mockOrder);
 
@@ -97,7 +98,7 @@ class OrderControllerTest {
     }
 
     @Test
-    void testOutOfDeliveryOrder() {
+    void testOutOfDeliveryOrder() throws MessagingException {
         Order mockOrder = new Order();
         when(orderService.updateStatusByPharmacy(1L, "order123", OrderStatus.OUT_OF_DELIVERY)).thenReturn(mockOrder);
 

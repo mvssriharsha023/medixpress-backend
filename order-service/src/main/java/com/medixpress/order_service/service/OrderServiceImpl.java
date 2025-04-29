@@ -8,8 +8,8 @@ import com.medixpress.order_service.model.OrderStatus;
 import com.medixpress.order_service.dto.OrderResponseDTO;
 import com.medixpress.order_service.repository.OrderItemRepository;
 import com.medixpress.order_service.repository.OrderRepository;
-import com.medixpress.order_service.response.CartItemDTO;
-import com.medixpress.order_service.response.MedicineResponse;
+import com.medixpress.order_service.response.*;
+import jakarta.mail.MessagingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +35,24 @@ public class OrderServiceImpl implements OrderService {
 
     @Autowired
     private RestTemplate restTemplate;
+
+    @Autowired
+    private EmailService emailService;
+
+    @Autowired
+    private EmailBuilder emailBuilder;
+
+
+    public UserDTO getUserDetails(Long userId) {
+        String url = "http://user-service/user/" + userId;
+        ResponseEntity<UserDTO> response = restTemplate.getForEntity(
+                url,
+                UserDTO.class
+        );
+
+        return Optional.ofNullable(response.getBody())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    }
 
     public MedicineResponse getMedicineDetails(String medicineId) {
         String url = "http://medicine-service/api/medicines/" + medicineId;
@@ -140,7 +158,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public Order placeOrder(Long id) {
+    public Order placeOrder(Long id) throws MessagingException {
         log.info("Fetching cart for user ID: {}", id);
 
         List<CartItemDTO> cartItems = getUserCart(id);
@@ -201,6 +219,42 @@ public class OrderServiceImpl implements OrderService {
 
         // Clear the cart
         clearUserCart(id);
+
+        // Get user and pharmacy details
+        UserDTO user = getUserDetails(id);
+        UserDTO pharmacy = getUserDetails(order.getPharmacyId());
+
+        EmailResponseDTO emailResponseDTO = new EmailResponseDTO();
+        emailResponseDTO.setCustomerName(user.getName());
+        emailResponseDTO.setPharmacyName(pharmacy.getName());
+        emailResponseDTO.setTotalAmount(order.getTotalAmount());
+        emailResponseDTO.setStatus(order.getStatus());
+        emailResponseDTO.setOrderDateTime(order.getOrderDateTime());
+
+        List<ItemResponseDTO> itemResponseDTOList = new ArrayList<>();
+
+        for (OrderItem item : order.getItems()) {
+            ItemResponseDTO itemResponseDTO = new ItemResponseDTO();
+
+            MedicineResponse medicine = getMedicineDetails(item.getMedicineId());
+
+            itemResponseDTO.setMedicineName(medicine.getName());
+            itemResponseDTO.setQuantity(item.getQuantity());
+            itemResponseDTO.setPricePerUnit(item.getPricePerUnit());
+            itemResponseDTO.setTotalPrice(item.getTotalPrice());
+
+            itemResponseDTOList.add(itemResponseDTO);
+        }
+
+        emailResponseDTO.setItems(itemResponseDTOList);
+
+        String customerMessage = emailBuilder.buildCustomerHtmlEmail(emailResponseDTO);
+        String pharmacyMessage = emailBuilder.buildPharmacyHtmlEmail(emailResponseDTO);
+
+        // Send email
+        emailService.sendHtmlEmail(user.getEmail(), "Order Placed", customerMessage);
+        emailService.sendHtmlEmail(pharmacy.getEmail(), "New Order Received", pharmacyMessage);
+
         return order;
     }
 
@@ -290,7 +344,7 @@ public class OrderServiceImpl implements OrderService {
                 .build();
     }
 
-    public Order updateStatusByUser(Long userId, String orderId, OrderStatus status) {
+    public Order updateStatusByUser(Long userId, String orderId, OrderStatus status) throws MessagingException {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException("Order not present"));
 
@@ -303,12 +357,82 @@ public class OrderServiceImpl implements OrderService {
                     increaseMedicineStock(item.getMedicineId(), item.getQuantity());
                 }
 
+                // Get user and pharmacy details
+                UserDTO user = getUserDetails(userId);
+                UserDTO pharmacy = getUserDetails(order.getPharmacyId());
+
+                EmailResponseDTO emailResponseDTO = new EmailResponseDTO();
+                emailResponseDTO.setCustomerName(user.getName());
+                emailResponseDTO.setPharmacyName(pharmacy.getName());
+                emailResponseDTO.setTotalAmount(order.getTotalAmount());
+                emailResponseDTO.setStatus(order.getStatus());
+                emailResponseDTO.setOrderDateTime(order.getOrderDateTime());
+
+                List<ItemResponseDTO> itemResponseDTOList = new ArrayList<>();
+
+                for (OrderItem item : order.getItems()) {
+                    ItemResponseDTO itemResponseDTO = new ItemResponseDTO();
+
+                    MedicineResponse medicine = getMedicineDetails(item.getMedicineId());
+
+                    itemResponseDTO.setMedicineName(medicine.getName());
+                    itemResponseDTO.setQuantity(item.getQuantity());
+                    itemResponseDTO.setPricePerUnit(item.getPricePerUnit());
+                    itemResponseDTO.setTotalPrice(item.getTotalPrice());
+
+                    itemResponseDTOList.add(itemResponseDTO);
+                }
+
+                emailResponseDTO.setItems(itemResponseDTOList);
+
+                String customerMessage = emailBuilder.buildCustomerHtmlEmail(emailResponseDTO);
+                String pharmacyMessage = emailBuilder.buildPharmacyHtmlEmail(emailResponseDTO);
+
+                // Send email
+                emailService.sendHtmlEmail(user.getEmail(), "Order Cancelled", customerMessage);
+                emailService.sendHtmlEmail(pharmacy.getEmail(), "Order Cancelled", pharmacyMessage);
+
             } else {
                 throw new OutForDeliveryException("This order is already out for delivery or delivered");
             }
 
         } else if (status.toString().equals("DELIVERED")) {
             order.setStatus(OrderStatus.DELIVERED);
+
+            // Get user and pharmacy details
+            UserDTO user = getUserDetails(userId);
+            UserDTO pharmacy = getUserDetails(order.getPharmacyId());
+
+            EmailResponseDTO emailResponseDTO = new EmailResponseDTO();
+            emailResponseDTO.setCustomerName(user.getName());
+            emailResponseDTO.setPharmacyName(pharmacy.getName());
+            emailResponseDTO.setTotalAmount(order.getTotalAmount());
+            emailResponseDTO.setStatus(order.getStatus());
+            emailResponseDTO.setOrderDateTime(order.getOrderDateTime());
+
+            List<ItemResponseDTO> itemResponseDTOList = new ArrayList<>();
+
+            for (OrderItem item : order.getItems()) {
+                ItemResponseDTO itemResponseDTO = new ItemResponseDTO();
+
+                MedicineResponse medicine = getMedicineDetails(item.getMedicineId());
+
+                itemResponseDTO.setMedicineName(medicine.getName());
+                itemResponseDTO.setQuantity(item.getQuantity());
+                itemResponseDTO.setPricePerUnit(item.getPricePerUnit());
+                itemResponseDTO.setTotalPrice(item.getTotalPrice());
+
+                itemResponseDTOList.add(itemResponseDTO);
+            }
+
+            emailResponseDTO.setItems(itemResponseDTOList);
+
+            String customerMessage = emailBuilder.buildCustomerHtmlEmail(emailResponseDTO);
+            String pharmacyMessage = emailBuilder.buildPharmacyHtmlEmail(emailResponseDTO);
+
+            // Send email
+            emailService.sendHtmlEmail(user.getEmail(), "Order Delivered", customerMessage);
+            emailService.sendHtmlEmail(pharmacy.getEmail(), "Order Delivered", pharmacyMessage);
 
         } else {
             throw new UnauthorizedAccessException("Unauthorized access on this order");
@@ -319,7 +443,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Order updateStatusByPharmacy(Long pharmacyId, String orderId, OrderStatus status) {
+    public Order updateStatusByPharmacy(Long pharmacyId, String orderId, OrderStatus status) throws MessagingException {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException("Order not present"));
 
@@ -329,6 +453,42 @@ public class OrderServiceImpl implements OrderService {
 
         if (status.toString().equals("OUT_OF_DELIVERY") && order.getStatus().toString().equals("PLACED")) {
             order.setStatus(OrderStatus.OUT_OF_DELIVERY);
+
+            // Get user and pharmacy details
+            UserDTO user = getUserDetails(order.getUserId());
+            UserDTO pharmacy = getUserDetails(order.getPharmacyId());
+
+            EmailResponseDTO emailResponseDTO = new EmailResponseDTO();
+            emailResponseDTO.setCustomerName(user.getName());
+            emailResponseDTO.setPharmacyName(pharmacy.getName());
+            emailResponseDTO.setTotalAmount(order.getTotalAmount());
+            emailResponseDTO.setStatus(order.getStatus());
+            emailResponseDTO.setOrderDateTime(order.getOrderDateTime());
+
+            List<ItemResponseDTO> itemResponseDTOList = new ArrayList<>();
+
+            for (OrderItem item : order.getItems()) {
+                ItemResponseDTO itemResponseDTO = new ItemResponseDTO();
+
+                MedicineResponse medicine = getMedicineDetails(item.getMedicineId());
+
+                itemResponseDTO.setMedicineName(medicine.getName());
+                itemResponseDTO.setQuantity(item.getQuantity());
+                itemResponseDTO.setPricePerUnit(item.getPricePerUnit());
+                itemResponseDTO.setTotalPrice(item.getTotalPrice());
+
+                itemResponseDTOList.add(itemResponseDTO);
+            }
+
+            emailResponseDTO.setItems(itemResponseDTOList);
+
+            String customerMessage = emailBuilder.buildCustomerHtmlEmail(emailResponseDTO);
+            String pharmacyMessage = emailBuilder.buildPharmacyHtmlEmail(emailResponseDTO);
+
+            // Send email
+            emailService.sendHtmlEmail(user.getEmail(), "Order Out of Delivery", customerMessage);
+            emailService.sendHtmlEmail(pharmacy.getEmail(), "Order Out of Delivery", pharmacyMessage);
+
         } else {
             throw new UnauthorizedAccessException("Unauthorized access on this order");
         }
