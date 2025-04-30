@@ -42,6 +42,9 @@ public class OrderServiceImpl implements OrderService {
     @Autowired
     private EmailBuilder emailBuilder;
 
+    public OrderServiceImpl(OrderRepository orderRepository, EmailService emailService, EmailBuilder emailBuilder) {
+    }
+
 
     public UserDTO getUserDetails(Long userId) {
         String url = "http://user-service/user/" + userId;

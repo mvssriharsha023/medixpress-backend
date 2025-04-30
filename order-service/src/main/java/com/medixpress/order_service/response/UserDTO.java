@@ -20,4 +20,7 @@ public class UserDTO {
     private double latitude;
     private double longitude;
     private UserType userType;
+
+    public UserDTO(long l, String customerA, String mail) {
+    }
 }
