@@ -72,6 +72,7 @@ public class UserServiceImpl implements UserService {
                 .latitude(latLong[0])
                 .longitude(latLong[1])
                 .userType(userDTO.getUserType())
+                .licenseId(userDTO.getLicenseId())
                 .build();
 
         return userRepository.save(user);

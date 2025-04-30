@@ -21,4 +21,5 @@ public class UserDTO {
     private double latitude;
     private double longitude;
     private UserType userType;
+    private String licenseId;
 }

@@ -255,6 +255,7 @@ public class OrderServiceImpl implements OrderService {
         String pharmacyMessage = emailBuilder.buildPharmacyHtmlEmail(emailResponseDTO);
 
         // Send email
+        System.out.println(user.getEmail());
         emailService.sendHtmlEmail(user.getEmail(), "Order Placed", customerMessage);
         emailService.sendHtmlEmail(pharmacy.getEmail(), "New Order Received", pharmacyMessage);
 

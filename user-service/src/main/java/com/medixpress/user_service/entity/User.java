@@ -46,4 +46,6 @@ public class User {
     private double longitude;
 
     private UserType userType;
+
+    private String licenseId;
 }
